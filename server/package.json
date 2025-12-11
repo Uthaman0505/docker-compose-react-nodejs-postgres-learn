@@ -1,0 +1,28 @@
+{
+  "name": "crud-server-express",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/app.js",
+  "dependencies": {
+    "@prisma/client": "^6.16.1",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.2",
+    "express": "^5.1.0",
+    "nodemon": "^3.1.10"
+  },
+  "prisma": {
+    "seed": "node ./prisma/seed.js"
+  },
+  "scripts": {
+    "dev": "nodemon src/app.js",
+    "dev:local": "SERVER_PORT=7999 DATABASE_URL=\"postgresql://john_doe:john.doe@localhost:5431/docker_test_db?schema=public\" nodemon src/app.js",
+    "start": "node src/app.js",
+    "start:local": "SERVER_PORT=7999 DATABASE_URL=\"postgresql://john_doe:john.doe@localhost:5431/docker_test_db?schema=public\" node src/app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "prisma": "^6.16.1"
+  }
+}

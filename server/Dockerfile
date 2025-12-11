@@ -29,8 +29,8 @@ RUN apk add --no-cache openssl
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nodejs
 
-# Copy production dependencies
-COPY --from=deps --chown=nodejs:nodejs /app/node_modules ./node_modules
+# Copy dependencies with generated Prisma client
+COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
 # Copy application code and generated Prisma client
 COPY --from=builder --chown=nodejs:nodejs /app/src ./src
 COPY --from=builder --chown=nodejs:nodejs /app/prisma ./prisma

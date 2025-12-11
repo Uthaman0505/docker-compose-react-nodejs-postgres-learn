@@ -1,0 +1,136 @@
+name: Build and Push Monorepo Docker Images
+
+on:
+  push:
+    branches: [ main, develop ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    # SERVER IMAGE BUILD AND PUSH
+    - name: Extract metadata for server image
+      id: meta-server
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/server
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=ref,event=tag
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+        labels: |
+          org.opencontainers.image.title=Server
+          org.opencontainers.image.description=Node.js backend server with Prisma
+          org.opencontainers.image.vendor=${{ github.repository_owner }}
+
+    - name: Build and push server image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./server
+        file: ./server/Dockerfile
+        platforms: linux/amd64,linux/arm64
+        push: true
+        tags: ${{ steps.meta-server.outputs.tags }}
+        labels: ${{ steps.meta-server.outputs.labels }}
+        cache-from: type=gha,scope=server
+        cache-to: type=gha,mode=max,scope=server
+        build-args: |
+          NODE_ENV=production
+
+    # CLIENT IMAGE BUILD AND PUSH
+    - name: Extract metadata for client image
+      id: meta-client
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/client
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=ref,event=tag
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+        labels: |
+          org.opencontainers.image.title=Client
+          org.opencontainers.image.description=React frontend application
+          org.opencontainers.image.vendor=${{ github.repository_owner }}
+
+    - name: Build and push client image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./client
+        file: ./client/Dockerfile
+        platforms: linux/amd64,linux/arm64
+        push: true
+        tags: ${{ steps.meta-client.outputs.tags }}
+        labels: ${{ steps.meta-client.outputs.labels }}
+        cache-from: type=gha,scope=client
+        cache-to: type=gha,mode=max,scope=client
+        build-args: |
+          VITE_SERVER_URL=http://localhost:7999
+
+    # SECURITY SCANNING
+    - name: Run Trivy vulnerability scanner on server image
+      uses: aquasecurity/trivy-action@master
+      if: github.event_name != 'pull_request'
+      with:
+        image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/server:latest
+        format: 'sarif'
+        output: 'trivy-server-results.sarif'
+
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v2
+      if: github.event_name != 'pull_request' && always()
+      with:
+        sarif_file: 'trivy-server-results.sarif'
+
+    # BUILD SUMMARY
+    - name: Generate build summary
+      if: always()
+      run: |
+        echo "## 🐳 Docker Build Summary" >> $GITHUB_STEP_SUMMARY
+        echo "| Component | Status | Image Tags |" >> $GITHUB_STEP_SUMMARY  
+        echo "|-----------|---------|------------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Server | ✅ Built | \`${{ steps.meta-server.outputs.tags }}\` |" >> $GITHUB_STEP_SUMMARY
+        echo "| Client | ✅ Built | \`${{ steps.meta-client.outputs.tags }}\` |" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📦 Registry Information" >> $GITHUB_STEP_SUMMARY
+        echo "- **Registry:** \`${{ env.REGISTRY }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "- **Repository:** \`${{ env.IMAGE_NAME }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "- **Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🚀 Deployment Commands" >> $GITHUB_STEP_SUMMARY
+        echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+        echo "# Pull latest images" >> $GITHUB_STEP_SUMMARY
+        echo "docker compose -f docker-compose.prod.yml pull" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "# Deploy to production" >> $GITHUB_STEP_SUMMARY
+        echo "docker compose -f docker-compose.prod.yml up -d" >> $GITHUB_STEP_SUMMARY
+        echo "\`\`\`" >> $GITHUB_STEP_SUMMARY

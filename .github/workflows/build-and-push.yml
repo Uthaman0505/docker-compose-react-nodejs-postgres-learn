@@ -103,11 +103,11 @@ jobs:
       # VERIFY IMAGES
       - name: Verify images were pushed successfully
         run: |
-        echo "Verifying server image..."
-        docker manifest inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}/server:latest
-        echo "Verifying client image..."
-        docker manifest inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}/client:latest
-        echo "✅ All images verified successfully"
+          echo "Verifying server image..."
+          docker manifest inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}/server:latest
+          echo "Verifying client image..."
+          docker manifest inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}/client:latest
+          echo "✅ All images verified successfully"
 
       # SECURITY SCANNING
       - name: Run Trivy vulnerability scanner on server image
@@ -130,22 +130,22 @@ jobs:
       - name: Generate build summary
         if: always()
         run: |
-        echo "## 🐳 Docker Build Summary" >> $GITHUB_STEP_SUMMARY
-        echo "| Component | Status | Image Tags |" >> $GITHUB_STEP_SUMMARY  
-        echo "|-----------|---------|------------|" >> $GITHUB_STEP_SUMMARY
-        echo "| Server | ✅ Built | \`${{ steps.meta-server.outputs.tags }}\` |" >> $GITHUB_STEP_SUMMARY
-        echo "| Client | ✅ Built | \`${{ steps.meta-client.outputs.tags }}\` |" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### 📦 Registry Information" >> $GITHUB_STEP_SUMMARY
-        echo "- **Registry:** \`${{ env.REGISTRY }}\`" >> $GITHUB_STEP_SUMMARY
-        echo "- **Repository:** \`${{ env.IMAGE_NAME_LOWER }}\`" >> $GITHUB_STEP_SUMMARY
-        echo "- **Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### 🚀 Deployment Commands" >> $GITHUB_STEP_SUMMARY
-        echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
-        echo "# Pull latest images" >> $GITHUB_STEP_SUMMARY
-        echo "docker compose -f docker-compose.prod.yml pull" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "# Deploy to production" >> $GITHUB_STEP_SUMMARY
-        echo "docker compose -f docker-compose.prod.yml up -d" >> $GITHUB_STEP_SUMMARY
-        echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "## 🐳 Docker Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "| Component | Status | Image Tags |" >> $GITHUB_STEP_SUMMARY  
+          echo "|-----------|---------|------------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Server | ✅ Built | \`${{ steps.meta-server.outputs.tags }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Client | ✅ Built | \`${{ steps.meta-client.outputs.tags }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 Registry Information" >> $GITHUB_STEP_SUMMARY
+          echo "- **Registry:** \`${{ env.REGISTRY }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Repository:** \`${{ env.IMAGE_NAME_LOWER }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🚀 Deployment Commands" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "# Pull latest images" >> $GITHUB_STEP_SUMMARY
+          echo "docker compose -f docker-compose.prod.yml pull" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "# Deploy to production" >> $GITHUB_STEP_SUMMARY
+          echo "docker compose -f docker-compose.prod.yml up -d" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY

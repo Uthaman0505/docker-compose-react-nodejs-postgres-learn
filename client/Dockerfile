@@ -34,8 +34,9 @@ RUN rm -rf ./*
 # Copy built assets from builder stage
 COPY --from=builder /app/dist .
 
-# Copy custom nginx configuration
-COPY --from=builder /app/nginx.conf /etc/nginx/conf.d/default.conf 2>/dev/null || echo 'server {
+# Write nginx configuration using heredoc
+RUN cat > /etc/nginx/conf.d/default.conf <<'EOF'
+server {
     listen 4173;
     listen [::]:4173;
     server_name _;
@@ -67,8 +68,9 @@ COPY --from=builder /app/nginx.conf /etc/nginx/conf.d/default.conf 2>/dev/null |
     add_header X-Frame-Options "SAMEORIGIN" always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header Referrer-Policy "no-referrer-when-downgrade" always;
-    add_header Content-Security-Policy "default-src '\''self'\'' http: https: data: blob: '\''unsafe-inline'\''" always;
-}' > /etc/nginx/conf.d/default.conf
+    add_header Content-Security-Policy "default-src 'self' http: https: data: blob: 'unsafe-inline'" always;
+}
+EOF
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \

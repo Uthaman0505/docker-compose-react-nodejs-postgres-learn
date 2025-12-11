@@ -21,8 +21,12 @@ jobs:
       security-events: write
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up lowercase repository name
+        run: |
+          echo "IMAGE_NAME_LOWER=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
@@ -38,8 +42,8 @@ jobs:
     - name: Extract metadata for server image
       id: meta-server
       uses: docker/metadata-action@v5
-      with:
-        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/server
+             with:
+               images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}/server
         tags: |
           type=ref,event=branch
           type=ref,event=pr
@@ -70,7 +74,7 @@ jobs:
       id: meta-client
       uses: docker/metadata-action@v5
       with:
-        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/client
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}/client
         tags: |
           type=ref,event=branch
           type=ref,event=pr
@@ -100,9 +104,9 @@ jobs:
     - name: Verify images were pushed successfully
       run: |
         echo "Verifying server image..."
-        docker manifest inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/server:latest
+        docker manifest inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}/server:latest
         echo "Verifying client image..."
-        docker manifest inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/client:latest
+        docker manifest inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}/client:latest
         echo "✅ All images verified successfully"
 
     # SECURITY SCANNING
@@ -111,13 +115,13 @@ jobs:
       if: github.event_name != 'pull_request'
       continue-on-error: true
       with:
-        image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/server:latest
+        image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}/server:latest
         format: 'sarif'
         output: 'trivy-server-results.sarif'
         exit-code: '0'
 
     - name: Upload Trivy scan results to GitHub Security tab
-      uses: github/codeql-action/upload-sarif@v2
+      uses: github/codeql-action/upload-sarif@v3
       if: github.event_name != 'pull_request' && always()
       with:
         sarif_file: 'trivy-server-results.sarif'
@@ -134,7 +138,7 @@ jobs:
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### 📦 Registry Information" >> $GITHUB_STEP_SUMMARY
         echo "- **Registry:** \`${{ env.REGISTRY }}\`" >> $GITHUB_STEP_SUMMARY
-        echo "- **Repository:** \`${{ env.IMAGE_NAME }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "- **Repository:** \`${{ env.IMAGE_NAME_LOWER }}\`" >> $GITHUB_STEP_SUMMARY
         echo "- **Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### 🚀 Deployment Commands" >> $GITHUB_STEP_SUMMARY

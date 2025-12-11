@@ -28,21 +28,21 @@ jobs:
         run: |
           echo "IMAGE_NAME_LOWER=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-    - name: Log in to Container Registry
-      uses: docker/login-action@v3
-      with:
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
         registry: ${{ env.REGISTRY }}
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
-    # SERVER IMAGE BUILD AND PUSH
-    - name: Extract metadata for server image
-      id: meta-server
-      uses: docker/metadata-action@v5
-             with:
+      # SERVER IMAGE BUILD AND PUSH
+      - name: Extract metadata for server image
+        id: meta-server
+        uses: docker/metadata-action@v5
+        with:
                images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}/server
         tags: |
           type=ref,event=branch
@@ -55,8 +55,8 @@ jobs:
           org.opencontainers.image.description=Node.js backend server with Prisma
           org.opencontainers.image.vendor=${{ github.repository_owner }}
 
-    - name: Build and push server image
-      uses: docker/build-push-action@v5
+      - name: Build and push server image
+        uses: docker/build-push-action@v5
       with:
         context: ./server
         file: ./server/Dockerfile
@@ -69,9 +69,9 @@ jobs:
         build-args: |
           NODE_ENV=production
 
-    # CLIENT IMAGE BUILD AND PUSH
-    - name: Extract metadata for client image
-      id: meta-client
+      # CLIENT IMAGE BUILD AND PUSH
+      - name: Extract metadata for client image
+        id: meta-client
       uses: docker/metadata-action@v5
       with:
         images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}/client
@@ -86,8 +86,8 @@ jobs:
           org.opencontainers.image.description=React frontend application
           org.opencontainers.image.vendor=${{ github.repository_owner }}
 
-    - name: Build and push client image
-      uses: docker/build-push-action@v5
+      - name: Build and push client image
+        uses: docker/build-push-action@v5
       with:
         context: ./client
         file: ./client/Dockerfile
@@ -100,8 +100,8 @@ jobs:
         build-args: |
           VITE_SERVER_URL=http://server:8000
 
-    # VERIFY IMAGES
-    - name: Verify images were pushed successfully
+      # VERIFY IMAGES
+      - name: Verify images were pushed successfully
       run: |
         echo "Verifying server image..."
         docker manifest inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}/server:latest
@@ -109,8 +109,8 @@ jobs:
         docker manifest inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}/client:latest
         echo "✅ All images verified successfully"
 
-    # SECURITY SCANNING
-    - name: Run Trivy vulnerability scanner on server image
+      # SECURITY SCANNING
+      - name: Run Trivy vulnerability scanner on server image
       uses: aquasecurity/trivy-action@master
       if: github.event_name != 'pull_request'
       continue-on-error: true
@@ -120,15 +120,15 @@ jobs:
         output: 'trivy-server-results.sarif'
         exit-code: '0'
 
-    - name: Upload Trivy scan results to GitHub Security tab
-      uses: github/codeql-action/upload-sarif@v3
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
       if: github.event_name != 'pull_request' && always()
       with:
         sarif_file: 'trivy-server-results.sarif'
 
-    # BUILD SUMMARY
-    - name: Generate build summary
-      if: always()
+      # BUILD SUMMARY
+      - name: Generate build summary
+        if: always()
       run: |
         echo "## 🐳 Docker Build Summary" >> $GITHUB_STEP_SUMMARY
         echo "| Component | Status | Image Tags |" >> $GITHUB_STEP_SUMMARY  

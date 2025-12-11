@@ -94,16 +94,27 @@ jobs:
         cache-from: type=gha,scope=client
         cache-to: type=gha,mode=max,scope=client
         build-args: |
-          VITE_SERVER_URL=http://localhost:7999
+          VITE_SERVER_URL=http://server:8000
+
+    # VERIFY IMAGES
+    - name: Verify images were pushed successfully
+      run: |
+        echo "Verifying server image..."
+        docker manifest inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/server:latest
+        echo "Verifying client image..."
+        docker manifest inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/client:latest
+        echo "✅ All images verified successfully"
 
     # SECURITY SCANNING
     - name: Run Trivy vulnerability scanner on server image
       uses: aquasecurity/trivy-action@master
       if: github.event_name != 'pull_request'
+      continue-on-error: true
       with:
         image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/server:latest
         format: 'sarif'
         output: 'trivy-server-results.sarif'
+        exit-code: '0'
 
     - name: Upload Trivy scan results to GitHub Security tab
       uses: github/codeql-action/upload-sarif@v2

@@ -26,7 +26,7 @@ services:
   server:
     container_name: server-prod
     # Update this with your actual GitHub username and repository name
-    image: ghcr.io/uthaman0505/docker-compose-react-nodejs-postgres-learn/server:latest
+    image: ghcr.io/Uthaman0505/docker-compose-react-nodejs-postgres-learn/server:latest
     ports:
       - "7999:8000"
     environment:
@@ -56,7 +56,7 @@ services:
   client:
     container_name: client-prod
     # Update this with your actual GitHub username and repository name
-    image: ghcr.io/uthaman0505/docker-compose-react-nodejs-postgres-learn/client:latest
+    image: ghcr.io/Uthaman0505/docker-compose-react-nodejs-postgres-learn/client:latest
     ports:
       - "4172:4173"
     environment:
